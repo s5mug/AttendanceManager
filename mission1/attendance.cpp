@@ -7,95 +7,95 @@
 
 using namespace std;
 
-struct Node {
-	string w;
-	string wk;
+struct WeekDayData {
+	string nameStr;
+	string dateStr;
 };
 
 map<string, int> id1;
 int id_cnt = 0;
 
 //dat[사용자ID][요일]
-int dat[100][100];
+int attendance_count_by_date[100][100];
 int points[100];
 int grade[100];
 string names[100];
 
-int wed[100];
-int weeken[100];
+int attendance_wendsday[100];
+int attendance_weekend[100];
 
-void input2(string w, string wk) {
+void input2(const WeekDayData &weekdayData) {
 	//ID 부여
-	if (id1.count(w) == 0) {
-		id1.insert({ w, ++id_cnt });
+	if (id1.count(weekdayData.nameStr) == 0) {
+		id1.insert({ weekdayData.nameStr, ++id_cnt });
 
-		if (w == "Daisy") {
+		if (weekdayData.nameStr == "Daisy") {
 			int debug = 1;
 		}
 
-		names[id_cnt] = w;
+		names[id_cnt] = weekdayData.nameStr;
 	}
-	int id2 = id1[w];
+	int id2 = id1[weekdayData.nameStr];
 
 	//디버깅용
-	if (w == "Daisy") {
+	if (weekdayData.nameStr == "Daisy") {
 		int debug = 1;
 	}
 
 
-	int add_point = 0;
+	int attendance_point = 0;
 	int index = 0;
-	if (wk == "monday") {
+	if (weekdayData.dateStr == "monday") {
 		index = 0;
-		add_point++;
+		attendance_point++;
 	}
-	if (wk == "tuesday") {
+	if (weekdayData.dateStr == "tuesday") {
 		index = 1;
-		add_point++;
+		attendance_point++;
 	}
-	if (wk == "wednesday") {
+	if (weekdayData.dateStr == "wednesday") {
 		index = 2;
-		add_point += 3;
-		wed[id2] += 1;
+		attendance_point += 3;
+		attendance_wendsday[id2] += 1;
 	}
-	if (wk == "thursday") {
+	if (weekdayData.dateStr == "thursday") {
 		index = 3;
-		add_point++;
+		attendance_point++;
 	}
-	if (wk == "friday") {
+	if (weekdayData.dateStr == "friday") {
 		index = 4;
-		add_point++;
+		attendance_point++;
 	}
-	if (wk == "saturday") {
+	if (weekdayData.dateStr == "saturday") {
 		index = 5;
-		add_point += 2;
-		weeken[id2] += 1;
+		attendance_point += 2;
+		attendance_weekend[id2] += 1;
 	}
-	if (wk == "sunday") {
+	if (weekdayData.dateStr == "sunday") {
 		index = 6;
-		add_point += 2;
-		weeken[id2] += 1;
+		attendance_point += 2;
+		attendance_weekend[id2] += 1;
 	}
 
 	//사용자ID별 요일 데이터에 1씩 증가
-	dat[id2][index] += 1;
-	points[id2] += add_point;
+	attendance_count_by_date[id2][index] += 1;
+	points[id2] += attendance_point;
 }
 
 void input() {
 	ifstream fin{ "attendance_weekday_500.txt" }; //500개 데이터 입력
 	for (int i = 0; i < 500; i++) {
-		string t1, t2;
-		fin >> t1 >> t2;
-		input2(t1, t2);
+		WeekDayData weekdayData;
+		fin >> weekdayData.nameStr >> weekdayData.dateStr;
+		input2(weekdayData);
 	}
 
 	for (int i = 1; i <= id_cnt; i++) {
-		if (dat[i][2] > 9) {
+		if (attendance_count_by_date[i][2] > 9) {
 			points[i] += 10;
 		}
 
-		if (dat[i][5] + dat[i][6] > 9) {
+		if (attendance_count_by_date[i][5] + attendance_count_by_date[i][6] > 9) {
 			points[i] += 10;
 		}
 
@@ -129,7 +129,7 @@ void input() {
 	std::cout << "==============\n";
 	for (int i = 1; i <= id_cnt; i++) {
 
-		if (grade[i] != 1 && grade[i] != 2 && wed[i] == 0 && weeken[i] == 0) {
+		if (grade[i] != 1 && grade[i] != 2 && attendance_wendsday[i] == 0 && attendance_weekend[i] == 0) {
 			std::cout << names[i] << "\n";
 		}
 	}
