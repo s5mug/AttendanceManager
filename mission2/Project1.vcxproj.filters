@@ -29,12 +29,27 @@
     <ClCompile Include="test.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="grade.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="policy.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="attendance.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="grade.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="policy.hpp">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="player.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

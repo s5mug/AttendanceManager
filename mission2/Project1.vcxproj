@@ -128,6 +128,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attendance.cpp" />
+    <ClCompile Include="grade.cpp" />
+    <ClCompile Include="policy.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +137,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="attendance.hpp" />
+    <ClInclude Include="grade.hpp" />
+    <ClInclude Include="player.hpp" />
+    <ClInclude Include="policy.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

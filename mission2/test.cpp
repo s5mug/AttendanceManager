@@ -11,36 +11,33 @@
 using namespace testing;
 using namespace std;
 
-extern int max_player_id;;
-extern map<string, int> player_name_to_Id_map;
-extern int player_point[MAX_NUM_PLAYER_ID];
-extern int attendance_count_by_date[MAX_NUM_PLAYER_ID][MAX_NUM_DATE];
-
 class AttendanceMangerFixture : public Test {
 public:
+	AttendanceMangerFixture() :
+		gradeChecker{NormalGrade::getInstance(), SilverGrade::getInstance(), GoldGrade::getInstance()},
+		defaultPolicy{ {&basePolicy, &weekendPolicy, &wendnesdayPolicy} },
+		attendanceManger{ defaultPolicy, gradeChecker }
+	{
+
+	}
+
+
 	void SetUp() override {
 		InitManger();
-		ANY_PLAYER_ID = getPlayerIdFromName(ANY_NAME);
 	}
 
 	void InitManger() {
-		max_player_id = 0;
-		player_name_to_Id_map.clear();
-		memset(player_point, 0, sizeof(player_point));
-		memset(attendance_count_by_date, 0, sizeof(attendance_count_by_date));
+
 	}
 
-	int TestBasePointIncrease(DATE_ID date) {
-		int old_player_point = player_point[ANY_PLAYER_ID];
-		updatePlayer(ANY_PLAYER_ID, date);
-		int new_player_point = player_point[ANY_PLAYER_ID];
-		return new_player_point - old_player_point;
-	}
-
-	int TestBonusPointIncreaseAfterSummarize() {
-		int old_player_point = player_point[ANY_PLAYER_ID];
-		summarizePlayers();
-		int new_player_point = player_point[ANY_PLAYER_ID];
+	int TestPointIncreaseByDate(DATE_ID date, DateWorkPolicy* policy, int date_cnt = 1) {
+		Player player{};
+		int old_player_point = player.getPoint();
+		for (int i = 0; i < date_cnt; i++) {
+			player.updateNewDateWork(date);
+		}
+		player.updatePoint(policy);
+		int new_player_point = player.getPoint();
 		return new_player_point - old_player_point;
 	}
 
@@ -51,10 +48,36 @@ public:
 		return sstr.str();
 	}
 
+	Player& GetAnyPlayer() {
+		int any_player_Id = attendanceManger.getPlayerIdFromName(ANY_NAME);
+		return attendanceManger.getPlayerFromId(any_player_Id);
+	}
+
+
+	BaseDatePolicy basePolicy;
+	WeekendBonusPolicy weekendPolicy;
+	WednesdayBonusPolicy wendnesdayPolicy;
+	GradeChecker gradeChecker;
+	MultipleDateWorkPolicy defaultPolicy;
+	AttendanceManager attendanceManger;
 	string ANY_NAME = "ANY";
 	string OTHER_NAME = "OTHER";
-	int ANY_PLAYER_ID = 0;
+
 };
+
+
+TEST_F(AttendanceMangerFixture, PlayerId_NewPlayerTest) {
+	int AnyPlayer = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	int OtherPlayer = attendanceManger.getPlayerIdFromName(OTHER_NAME);
+	EXPECT_NE(AnyPlayer, OtherPlayer);
+}
+
+TEST_F(AttendanceMangerFixture, PlayerId_SamePlayerTest) {
+	int AnyPlayer = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	int AnyPlayer2 = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	EXPECT_EQ(AnyPlayer, AnyPlayer2);
+}
+
 
 TEST_F(AttendanceMangerFixture, ValidDateTest) {
 	vector<DATE_ID> validDates{ MONDAY, TUSEDAY , WEDNESDAY , THURSDAY , FRIDAY , SATURDAY , SUNDAY };
@@ -63,19 +86,6 @@ TEST_F(AttendanceMangerFixture, ValidDateTest) {
 	}
 
 	EXPECT_FALSE(IsValidDate(MAX_NUM_DATE));
-}
-
-
-TEST_F(AttendanceMangerFixture, PlayerId_NewPlayerTest) {
-	int any_player_Id = getPlayerIdFromName(ANY_NAME);
-	int other_player_Id = getPlayerIdFromName(OTHER_NAME);
-	EXPECT_NE(any_player_Id, other_player_Id);
-}
-
-TEST_F(AttendanceMangerFixture, PlayerId_SamePlayerTest) {
-	int any_player_Id = getPlayerIdFromName(ANY_NAME);
-	int any_player_Id2 = getPlayerIdFromName(ANY_NAME);
-	EXPECT_EQ(any_player_Id, any_player_Id2);
 }
 
 TEST_F(AttendanceMangerFixture, DateStrToDateIndex) {
@@ -90,61 +100,48 @@ TEST_F(AttendanceMangerFixture, DateStrToDateIndex) {
 }
 
 TEST_F(AttendanceMangerFixture, UpdatePlayerWithDefaultBase) {
-	EXPECT_EQ(BASE_POINT_DEFAULT, TestBasePointIncrease(MONDAY));
-	EXPECT_EQ(BASE_POINT_DEFAULT, TestBasePointIncrease(TUSEDAY));
-	EXPECT_EQ(BASE_POINT_DEFAULT, TestBasePointIncrease(THURSDAY));
-	EXPECT_EQ(BASE_POINT_DEFAULT, TestBasePointIncrease(FRIDAY));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(MONDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(TUSEDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(THURSDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(FRIDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(WEDNESDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(SATURDAY, &basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(SUNDAY, &basePolicy));
 
-	EXPECT_EQ(BASE_POINT_WEDNESDAY, TestBasePointIncrease(WEDNESDAY));
-
-	EXPECT_EQ(BASE_POINT_WEEKEND, TestBasePointIncrease(SATURDAY));
-	EXPECT_EQ(BASE_POINT_WEEKEND, TestBasePointIncrease(SUNDAY));
-
-	EXPECT_EQ(0, TestBasePointIncrease(MAX_NUM_DATE));
+	EXPECT_EQ(0, TestPointIncreaseByDate(MAX_NUM_DATE, &basePolicy));
 }
 
+
 TEST_F(AttendanceMangerFixture, BonusByWednesDay) {
-	int WENDSDAY_LESS_THAN_THRESHOLD = WEDNESDAY_BONUS__POINT_THRESHOLD - 1;
-	for (int i = 0; i < WENDSDAY_LESS_THAN_THRESHOLD; i++) {
-		updatePlayer(ANY_PLAYER_ID, WEDNESDAY);
-	}
+	int lessThresholdWorkCnt = WednesdayBonusPolicy::WEDNESDAY_BONUS_POINT_THRESHOLD - 1;
+	int expected_less_threshold = lessThresholdWorkCnt * WednesdayBonusPolicy::BASE_BONUS_WEDNESDAY;
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(WEDNESDAY, &wendnesdayPolicy, lessThresholdWorkCnt));
 
-	EXPECT_EQ(0, TestBonusPointIncreaseAfterSummarize());
 
-	for (int i = 0; i < WEDNESDAY_BONUS__POINT_THRESHOLD; i++) {
-		updatePlayer(ANY_PLAYER_ID, WEDNESDAY);
-	}
-
-	EXPECT_EQ(WEDNESDAY_BONUS_PONINT, TestBonusPointIncreaseAfterSummarize());
+	int overThresholdWorkCnt = WednesdayBonusPolicy::WEDNESDAY_BONUS_POINT_THRESHOLD;
+	int expected_over_threshold = WednesdayBonusPolicy::BASE_BONUS_WEDNESDAY * overThresholdWorkCnt + WednesdayBonusPolicy::WEDNESDAY_BONUS_PONINT;
+	EXPECT_EQ(expected_over_threshold, TestPointIncreaseByDate(WEDNESDAY, &wendnesdayPolicy, overThresholdWorkCnt));
 }
 
 TEST_F(AttendanceMangerFixture, BonusByWeekend) {
-	int WEEKEND_LESS_THAN_THRESHOLD = WEEKEND_BONUS_POINT_THRESHOLD - 1;
-	for (int i = 0; i < WEEKEND_LESS_THAN_THRESHOLD; i++) {
-		updatePlayer(ANY_PLAYER_ID, SUNDAY);
-	}
+	int lessThresholdWorkCnt = WeekendBonusPolicy::WEEKEND_BONUS_POINT_THRESHOLD - 1;
+	int expected_less_threshold = lessThresholdWorkCnt * WeekendBonusPolicy::BASE_BONUS_WEEKEND;
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SATURDAY, &weekendPolicy, lessThresholdWorkCnt));
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SUNDAY, &weekendPolicy, lessThresholdWorkCnt));
 
-	EXPECT_EQ(0, TestBonusPointIncreaseAfterSummarize());
-
-	for (int i = 0; i < WEEKEND_BONUS_POINT_THRESHOLD; i++) {
-		updatePlayer(ANY_PLAYER_ID, SUNDAY);
-	}
-
-	EXPECT_EQ(WEEKEND_BONUS_PONINT, TestBonusPointIncreaseAfterSummarize());
+	int overThresholdWorkCnt = WeekendBonusPolicy::WEEKEND_BONUS_POINT_THRESHOLD;
+	int expected_over_threshold = WeekendBonusPolicy::BASE_BONUS_WEEKEND * overThresholdWorkCnt + WeekendBonusPolicy::WEEKEND_BONUS_PONINT;
+	EXPECT_EQ(expected_over_threshold, TestPointIncreaseByDate(SATURDAY, &weekendPolicy, overThresholdWorkCnt));
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SUNDAY, &weekendPolicy, lessThresholdWorkCnt));
 }
 
 TEST_F(AttendanceMangerFixture, GradeFromPoint) {
-	EXPECT_EQ(GRADE_NORMAL, getGradeFromPoint(0));
-	EXPECT_EQ(GRADE_NORMAL, getGradeFromPoint(SILVER_GRADE_THRESHOLD - 1));
-	EXPECT_EQ(GRADE_SILVER, getGradeFromPoint(SILVER_GRADE_THRESHOLD));
-	EXPECT_EQ(GRADE_SILVER, getGradeFromPoint(GOLD_GRADE_THRESHOLD - 1));
-	EXPECT_EQ(GRADE_GOLD, getGradeFromPoint(GOLD_GRADE_THRESHOLD));
-}
-
-TEST_F(AttendanceMangerFixture, getGradeStr) {
-	EXPECT_EQ("GOLD", getGradeStr(GRADE_GOLD));
-	EXPECT_EQ("SILVER", getGradeStr(GRADE_SILVER));
-	EXPECT_EQ("NORMAL", getGradeStr(GRADE_NORMAL));
+	EXPECT_EQ(nullptr, gradeChecker.getGradeFromPoint(-1));
+	EXPECT_TRUE(NormalGrade::IsNormalGrade(gradeChecker.getGradeFromPoint(0)));
+	EXPECT_TRUE(NormalGrade::IsNormalGrade(gradeChecker.getGradeFromPoint(SilverGrade::POINT_THRESHOLD - 1)));
+	EXPECT_TRUE(SilverGrade::IsSilverGrade(gradeChecker.getGradeFromPoint(SilverGrade::POINT_THRESHOLD)));
+	EXPECT_TRUE(SilverGrade::IsSilverGrade(gradeChecker.getGradeFromPoint(GoldGrade::POINT_THRESHOLD - 1)));
+	EXPECT_TRUE(GoldGrade::IsGoldGrade(gradeChecker.getGradeFromPoint(GoldGrade::POINT_THRESHOLD)));
 }
 
 TEST_F(AttendanceMangerFixture, ReadFromFilesTest) {
@@ -157,7 +154,7 @@ TEST_F(AttendanceMangerFixture, ReadFromFilesTest) {
 	string sampleOutput = getSampleOutput();
 	const char* weekdayDataFileName = "attendance_weekday_500.txt";
 	const int WEEKDAY_DATA_NUM = 500;
-	attendanceManageWeekdayDataFile(weekdayDataFileName, WEEKDAY_DATA_NUM);
+	attendanceManger.ManageWeekdayDataFile(weekdayDataFileName, WEEKDAY_DATA_NUM);
 
 
 	EXPECT_EQ(sampleOutput, actualOutput.str());

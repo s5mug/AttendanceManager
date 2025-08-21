@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>test.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+    <body onload="prettyPrint()">
+        <h4></h4>
+        <pre class="prettyprint lang-cpp linenums">
+#include "gmock/gmock.h"
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;map&gt;
+#include &lt;algorithm&gt;
+#include "attendance.hpp"
+
+
+using namespace testing;
+using namespace std;
+
+class AttendanceMangerFixture : public Test {
+public:
+	AttendanceMangerFixture() :
+<span style = "background-color:#dfd">		gradeChecker{NormalGrade::getInstance(), SilverGrade::getInstance(), GoldGrade::getInstance()},
+		defaultPolicy{ {&amp;basePolicy, &amp;weekendPolicy, &amp;wendnesdayPolicy} },
+		attendanceManger{ defaultPolicy, gradeChecker }
+	{</span>
+
+<span style = "background-color:#dfd">	}</span>
+
+
+<span style = "background-color:#dfd">	void SetUp() override {
+		InitManger();
+	}</span>
+
+<span style = "background-color:#dfd">	void InitManger() {</span>
+
+<span style = "background-color:#dfd">	}</span>
+
+<span style = "background-color:#dfd">	int TestPointIncreaseByDate(DATE_ID date, DateWorkPolicy* policy, int date_cnt = 1) {
+		Player player{};
+		int old_player_point = player.getPoint();
+		for (int i = 0; i &lt; date_cnt; i++) {
+			player.updateNewDateWork(date);
+		}
+		player.updatePoint(policy);
+		int new_player_point = player.getPoint();
+		return new_player_point - old_player_point;
+	}</span>
+
+<span style = "background-color:#dfd">	string getSampleOutput() {
+		ifstream fin{ "sample_output.txt" };
+		std::stringstream sstr;
+		while (fin &gt;&gt; sstr.rdbuf());
+		return sstr.str();
+	}</span>
+
+	Player&amp; GetAnyPlayer() {
+		int any_player_Id = attendanceManger.getPlayerIdFromName(ANY_NAME);
+		return attendanceManger.getPlayerFromId(any_player_Id);
+	}
+
+
+	BaseDatePolicy basePolicy;
+	WeekendBonusPolicy weekendPolicy;
+	WednesdayBonusPolicy wendnesdayPolicy;
+	GradeChecker gradeChecker;
+	MultipleDateWorkPolicy defaultPolicy;
+	AttendanceManager attendanceManger;
+<span style = "background-color:#dfd">	string ANY_NAME = "ANY";
+	string OTHER_NAME = "OTHER";</span>
+
+};
+
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, PlayerId_NewPlayerTest) {
+	int AnyPlayer = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	int OtherPlayer = attendanceManger.getPlayerIdFromName(OTHER_NAME);
+	EXPECT_NE(AnyPlayer, OtherPlayer);
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, PlayerId_SamePlayerTest) {
+	int AnyPlayer = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	int AnyPlayer2 = attendanceManger.getPlayerIdFromName(ANY_NAME);
+	EXPECT_EQ(AnyPlayer, AnyPlayer2);
+}</span>
+
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, ValidDateTest) {
+	vector&lt;DATE_ID&gt; validDates{ MONDAY, TUSEDAY , WEDNESDAY , THURSDAY , FRIDAY , SATURDAY , SUNDAY };
+	for (auto validDate : validDates) {
+		EXPECT_TRUE(IsValidDate(validDate));
+	}</span>
+
+<span style = "background-color:#dfd">	EXPECT_FALSE(IsValidDate(MAX_NUM_DATE));
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, DateStrToDateIndex) {
+	EXPECT_EQ(MONDAY, getDateIndexFromDateStr("monday"));
+	EXPECT_EQ(TUSEDAY, getDateIndexFromDateStr("tuesday"));
+	EXPECT_EQ(WEDNESDAY, getDateIndexFromDateStr("wednesday"));
+	EXPECT_EQ(THURSDAY, getDateIndexFromDateStr("thursday"));
+	EXPECT_EQ(FRIDAY, getDateIndexFromDateStr("friday"));
+	EXPECT_EQ(SATURDAY, getDateIndexFromDateStr("saturday"));
+	EXPECT_EQ(SUNDAY, getDateIndexFromDateStr("sunday"));
+	EXPECT_EQ(MAX_NUM_DATE, getDateIndexFromDateStr("ERROR"));
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, UpdatePlayerWithDefaultBase) {
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(MONDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(TUSEDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(THURSDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(FRIDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(WEDNESDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(SATURDAY, &amp;basePolicy));
+	EXPECT_EQ(BaseDatePolicy::BASE_POINT_DEFAULT, TestPointIncreaseByDate(SUNDAY, &amp;basePolicy));</span>
+
+<span style = "background-color:#dfd">	EXPECT_EQ(0, TestPointIncreaseByDate(MAX_NUM_DATE, &amp;basePolicy));
+}</span>
+
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, BonusByWednesDay) {
+	int lessThresholdWorkCnt = WednesdayBonusPolicy::WEDNESDAY_BONUS_POINT_THRESHOLD - 1;
+	int expected_less_threshold = lessThresholdWorkCnt * WednesdayBonusPolicy::BASE_BONUS_WEDNESDAY;
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(WEDNESDAY, &amp;wendnesdayPolicy, lessThresholdWorkCnt));</span>
+
+
+<span style = "background-color:#dfd">	int overThresholdWorkCnt = WednesdayBonusPolicy::WEDNESDAY_BONUS_POINT_THRESHOLD;
+	int expected_over_threshold = WednesdayBonusPolicy::BASE_BONUS_WEDNESDAY * overThresholdWorkCnt + WednesdayBonusPolicy::WEDNESDAY_BONUS_PONINT;
+	EXPECT_EQ(expected_over_threshold, TestPointIncreaseByDate(WEDNESDAY, &amp;wendnesdayPolicy, overThresholdWorkCnt));
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, BonusByWeekend) {
+	int lessThresholdWorkCnt = WeekendBonusPolicy::WEEKEND_BONUS_POINT_THRESHOLD - 1;
+	int expected_less_threshold = lessThresholdWorkCnt * WeekendBonusPolicy::BASE_BONUS_WEEKEND;
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SATURDAY, &amp;weekendPolicy, lessThresholdWorkCnt));
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SUNDAY, &amp;weekendPolicy, lessThresholdWorkCnt));</span>
+
+<span style = "background-color:#dfd">	int overThresholdWorkCnt = WeekendBonusPolicy::WEEKEND_BONUS_POINT_THRESHOLD;
+	int expected_over_threshold = WeekendBonusPolicy::BASE_BONUS_WEEKEND * overThresholdWorkCnt + WeekendBonusPolicy::WEEKEND_BONUS_PONINT;
+	EXPECT_EQ(expected_over_threshold, TestPointIncreaseByDate(SATURDAY, &amp;weekendPolicy, overThresholdWorkCnt));
+	EXPECT_EQ(expected_less_threshold, TestPointIncreaseByDate(SUNDAY, &amp;weekendPolicy, lessThresholdWorkCnt));
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, GradeFromPoint) {
+	EXPECT_EQ(nullptr, gradeChecker.getGradeFromPoint(-1));
+	EXPECT_TRUE(NormalGrade::IsNormalGrade(gradeChecker.getGradeFromPoint(0)));
+	EXPECT_TRUE(NormalGrade::IsNormalGrade(gradeChecker.getGradeFromPoint(SilverGrade::POINT_THRESHOLD - 1)));
+	EXPECT_TRUE(SilverGrade::IsSilverGrade(gradeChecker.getGradeFromPoint(SilverGrade::POINT_THRESHOLD)));
+	EXPECT_TRUE(SilverGrade::IsSilverGrade(gradeChecker.getGradeFromPoint(GoldGrade::POINT_THRESHOLD - 1)));
+	EXPECT_TRUE(GoldGrade::IsGoldGrade(gradeChecker.getGradeFromPoint(GoldGrade::POINT_THRESHOLD)));
+}</span>
+
+<span style = "background-color:#dfd">TEST_F(AttendanceMangerFixture, ReadFromFilesTest) {
+	InitManger();
+	stringstream actualOutput;
+	std::cout.rdbuf(actualOutput.rdbuf());
+	auto originalBuf = std::cout.rdbuf();</span>
+
+
+<span style = "background-color:#dfd">	string sampleOutput = getSampleOutput();
+	const char* weekdayDataFileName = "attendance_weekday_500.txt";
+	const int WEEKDAY_DATA_NUM = 500;
+	attendanceManger.ManageWeekdayDataFile(weekdayDataFileName, WEEKDAY_DATA_NUM);</span>
+
+
+<span style = "background-color:#dfd">	EXPECT_EQ(sampleOutput, actualOutput.str());
+	std::cout.rdbuf(originalBuf);
+}</span></pre>
+        <hr />
+        <table width="100%">
+            <thead>
+                <tr>
+                    <th align="center">
+                        <small>Generated by</small>
+                        <a href="https://github.com/OpenCppCoverage/OpenCppCoverage/releases">
+                            <strong>OpenCppCoverage (Version: 0.9.9.0)</strong>
+                        </a>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </body>
+</html>
