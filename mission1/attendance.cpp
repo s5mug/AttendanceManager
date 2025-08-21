@@ -15,7 +15,7 @@ struct Node {
 map<string, int> id1;
 int id_cnt = 0;
 
-//dat[ì‚¬ìš©ìID][ìš”ì¼]
+//dat[»ç¿ëÀÚID][¿äÀÏ]
 int dat[100][100];
 int points[100];
 int grade[100];
@@ -25,7 +25,7 @@ int wed[100];
 int weeken[100];
 
 void input2(string w, string wk) {
-	//ID ë¶€ì—¬
+	//ID ºÎ¿©
 	if (id1.count(w) == 0) {
 		id1.insert({ w, ++id_cnt });
 
@@ -37,7 +37,7 @@ void input2(string w, string wk) {
 	}
 	int id2 = id1[w];
 
-	//ë””ë²„ê¹…ìš©
+	//µğ¹ö±ë¿ë
 	if (w == "Daisy") {
 		int debug = 1;
 	}
@@ -77,13 +77,13 @@ void input2(string w, string wk) {
 		weeken[id2] += 1;
 	}
 
-	//ì‚¬ìš©ìIDë³„ ìš”ì¼ ë°ì´í„°ì— 1ì”© ì¦ê°€
+	//»ç¿ëÀÚIDº° ¿äÀÏ µ¥ÀÌÅÍ¿¡ 1¾¿ Áõ°¡
 	dat[id2][index] += 1;
 	points[id2] += add_point;
 }
 
 void input() {
-	ifstream fin{ "attendance_weekday_500.txt" }; //500ê°œ ë°ì´í„° ì…ë ¥
+	ifstream fin{ "attendance_weekday_500.txt" }; //500°³ µ¥ÀÌÅÍ ÀÔ·Â
 	for (int i = 0; i < 500; i++) {
 		string t1, t2;
 		fin >> t1 >> t2;
@@ -94,7 +94,7 @@ void input() {
 		if (dat[i][2] > 9) {
 			points[i] += 10;
 		}
-		
+
 		if (dat[i][5] + dat[i][6] > 9) {
 			points[i] += 10;
 		}
