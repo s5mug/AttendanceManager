@@ -11,4 +11,5 @@
 ## Code coverage
 ![Screenshot](https://github.com/s5mug/AttendanceManager/blob/master/res/CodeCoverage.png)
 
-[link](https://github.com/s5mug/AttendanceManager/blob/master/mission2/CoverageReport-2025-08-21-15h34m48s/index.html) 
+[Code coverage results](https://htmlpreview.github.io/?https://github.com/s5mug/AttendanceManager/blob/master/mission2/CoverageReport-2025-08-21-15h34m48s/index.html) 
+`https://github.com/s5mug/AttendanceManager/blob/master/mission2/CoverageReport-2025-08-21-15h34m48s/index.html`
